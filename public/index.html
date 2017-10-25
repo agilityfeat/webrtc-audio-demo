@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <head>
     <title>WebRTC Audio Demo</title>
+    <style>
+        video {
+            width: 320px;
+            height: 240px;
+        }
+        body {
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <h1>WebRTC Audio Demo</h1>
 
     <div id="selectRoom">
-        <label>Type the room number</label>
-        <input id="roomNumber" type="text" />
-        <button id="goRoom">Go</button>
+        <button id="goBoth">Video and Audio</button>
+        <button id="goVideoOnly">Video only</button>
     </div>
 
-    <div id="consultingRoom" style="display:none">
+    <div id="conferenceRoom" style="display:none">
         <video id="localVideo" autoplay></video>
         <video id="remoteVideo" autoplay></video>
+        <h2>Remote audio events</h2>
+        <ul id="audioEvents"></ul>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
