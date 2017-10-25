@@ -47,6 +47,10 @@ io.on('connection', function (socket) {
         socket.broadcast.to(event.room).emit('answer',event.sdp);
     });
 
+    socket.on('toggleAudio', function(event){
+        socket.broadcast.to(event.room).emit('toggleAudio', event.message);
+    });
+
 });
 
 // listener

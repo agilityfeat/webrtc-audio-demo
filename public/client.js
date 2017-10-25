@@ -5,6 +5,7 @@ var btnGoBoth = document.getElementById("goBoth");
 var btnGoVideoOnly = document.getElementById("goVideoOnly");
 var localVideo = document.getElementById("localVideo");
 var remoteVideo = document.getElementById("remoteVideo");
+var btnMute = document.getElementById("mute");
 var listAudioEvents = document.getElementById("audioEvents");
 
 // variables
@@ -29,9 +30,13 @@ var socket = io();
 
 btnGoBoth.onclick = () => initiateCall(true);
 btnGoVideoOnly.onclick = () => initiateCall(false);
+btnMute.onclick = toggleAudio;
 
 function initiateCall(audio) {
-    streamConstraints = {video: true, audio: audio}
+    streamConstraints = {
+        video: true,
+        audio: audio
+    }
     socket.emit('create or join', roomNumber);
     divSelectRoom.style = "display: none;";
     divConferenceRoom.style = "display: block;";
@@ -40,8 +45,7 @@ function initiateCall(audio) {
 // message handlers
 socket.on('created', function (room) {
     navigator.mediaDevices.getUserMedia(streamConstraints).then(function (stream) {
-        localStream = stream;
-        localVideo.src = URL.createObjectURL(stream);
+        addLocalStream(stream);
         isCaller = true;
     }).catch(function (err) {
         console.log('An error ocurred when accessing media devices');
@@ -50,8 +54,7 @@ socket.on('created', function (room) {
 
 socket.on('joined', function (room) {
     navigator.mediaDevices.getUserMedia(streamConstraints).then(function (stream) {
-        localStream = stream;
-        localVideo.src = URL.createObjectURL(stream);
+        addLocalStream(stream);
         socket.emit('ready', roomNumber);
     }).catch(function (err) {
         console.log('An error ocurred when accessing media devices');
@@ -68,10 +71,7 @@ socket.on('candidate', function (event) {
 
 socket.on('ready', function () {
     if (isCaller) {
-        rtcPeerConnection = new RTCPeerConnection(iceServers);
-        rtcPeerConnection.onicecandidate = onIceCandidate;
-        rtcPeerConnection.onaddstream = onAddStream;
-        rtcPeerConnection.addStream(localStream);
+        createPeerConnection();
         rtcPeerConnection.createOffer(setLocalAndOffer, function (e) {
             console.log(e)
         });
@@ -80,10 +80,7 @@ socket.on('ready', function () {
 
 socket.on('offer', function (event) {
     if (!isCaller) {
-        rtcPeerConnection = new RTCPeerConnection(iceServers);
-        rtcPeerConnection.onicecandidate = onIceCandidate;
-        rtcPeerConnection.onaddstream = onAddStream;
-        rtcPeerConnection.addStream(localStream);
+        createPeerConnection();
         rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event));
         rtcPeerConnection.createAnswer(setLocalAndAnswer, function (e) {
             console.log(e)
@@ -94,6 +91,10 @@ socket.on('offer', function (event) {
 socket.on('answer', function (event) {
     rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event));
 })
+
+socket.on('toggleAudio', function (event) {
+    addAudioEvent(event);
+});
 
 // handler functions
 function onIceCandidate(event) {
@@ -112,11 +113,8 @@ function onIceCandidate(event) {
 function onAddStream(event) {
     remoteVideo.src = URL.createObjectURL(event.stream);
     remoteStream = event.stream;
-    if(remoteStream.getAudioTracks().length > 0) {
+    if (remoteStream.getAudioTracks().length > 0) {
         addAudioEvent('Remote user is sending Audio');
-        addAudioEvent(remoteStream.getAudioTracks()[0].enabled ?
-                            "Remote user's audio is unmuted" :
-                            "Remote user's audio is muted");
     } else {
         addAudioEvent('Remote user is not sending Audio');
     }
@@ -140,8 +138,34 @@ function setLocalAndAnswer(sessionDescription) {
     });
 }
 
+//utility functions
+function addLocalStream(stream) {
+    localStream = stream;
+    localVideo.src = URL.createObjectURL(stream);
+
+    if (stream.getAudioTracks().length > 0) {
+        btnMute.style = "display: block";
+    }
+}
+
+function createPeerConnection() {
+    rtcPeerConnection = new RTCPeerConnection(iceServers);
+    rtcPeerConnection.onicecandidate = onIceCandidate;
+    rtcPeerConnection.onaddstream = onAddStream;
+    rtcPeerConnection.addStream(localStream);
+}
+
+function toggleAudio() {
+    localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled
+    socket.emit('toggleAudio', {
+        type: 'toggleAudio',
+        room: roomNumber,
+        message: localStream.getAudioTracks()[0].enabled ? "Remote user's audio is unmuted" : "Remote user's audio is muted"
+    });
+}
+
 function addAudioEvent(event) {
-    var li = document.createElement("li");
-    li.appendChild(document.createTextNode(event));
-    listAudioEvents.appendChild(li);
+    var p = document.createElement("p");
+    p.appendChild(document.createTextNode(event));
+    listAudioEvents.appendChild(p);
 }

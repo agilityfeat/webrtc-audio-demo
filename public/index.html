@@ -9,6 +9,10 @@
         body {
             text-align: center;
         }
+        #mute {
+            width: auto;
+            background: lightgreen;
+        }
     </style>
 </head>
 <body>
@@ -22,8 +26,10 @@
     <div id="conferenceRoom" style="display:none">
         <video id="localVideo" autoplay></video>
         <video id="remoteVideo" autoplay></video>
+        <br/>
+        <span id="mute" style="display:none">Toggle Audio</span>
         <h2>Remote audio events</h2>
-        <ul id="audioEvents"></ul>
+        <div id="audioEvents"></div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
