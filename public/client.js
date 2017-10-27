@@ -72,9 +72,12 @@ socket.on('candidate', function (event) {
 socket.on('ready', function () {
     if (isCaller) {
         createPeerConnection();
-        rtcPeerConnection.createOffer(setLocalAndOffer, function (e) {
-            console.log(e)
-        });
+        let offerOptions = {
+            offerToReceiveAudio: 1
+        }
+        rtcPeerConnection.createOffer(offerOptions)
+            .then(desc => setLocalAndOffer(desc))
+            .catch(e => console.log(e));
     }
 });
 
@@ -82,9 +85,9 @@ socket.on('offer', function (event) {
     if (!isCaller) {
         createPeerConnection();
         rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(event));
-        rtcPeerConnection.createAnswer(setLocalAndAnswer, function (e) {
-            console.log(e)
-        });
+        rtcPeerConnection.createAnswer()
+            .then(desc => setLocalAndAnswer(desc))
+            .catch(e => console.log(e));
     }
 });
 
