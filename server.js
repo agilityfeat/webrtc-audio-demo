@@ -1,7 +1,12 @@
 //requires
 const express = require('express');
 const app = express();
-var http = require('http').Server(app);
+const fs = require('fs');
+//var http = require('http').Server(app);
+var http = require('https').createServer({
+                                    key: fs.readFileSync('./server.key'),
+                                    cert: fs.readFileSync('./server.cert')
+                                    },app);
 var io = require('socket.io')(http);
 
 // express routing

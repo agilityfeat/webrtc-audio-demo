@@ -3,6 +3,7 @@ var divSelectRoom = document.getElementById("selectRoom");
 var divConferenceRoom = document.getElementById("conferenceRoom");
 var btnGoBoth = document.getElementById("goBoth");
 var btnGoVideoOnly = document.getElementById("goVideoOnly");
+var btnGoAudioOnly = document.getElementById("goAudioOnly");
 var localVideo = document.getElementById("localVideo");
 var remoteVideo = document.getElementById("remoteVideo");
 var btnMute = document.getElementById("mute");
@@ -28,13 +29,14 @@ var isCaller;
 // Let's do this
 var socket = io();
 
-btnGoBoth.onclick = () => initiateCall(true);
-btnGoVideoOnly.onclick = () => initiateCall(false);
+btnGoBoth.onclick = () => initiateCall(true, true);
+btnGoVideoOnly.onclick = () => initiateCall(false, true);
+btnGoAudioOnly.onclick = () => initiateCall(true, false);
 btnMute.onclick = toggleAudio;
 
-function initiateCall(audio) {
+function initiateCall(audio, video) {
     streamConstraints = {
-        video: true,
+        video: video,
         audio: audio
     }
     socket.emit('create or join', roomNumber);
@@ -73,7 +75,8 @@ socket.on('ready', function () {
     if (isCaller) {
         createPeerConnection();
         let offerOptions = {
-            offerToReceiveAudio: 1
+            offerToReceiveAudio: 1,
+            offerToReceiveVideo: 1
         }
         rtcPeerConnection.createOffer(offerOptions)
             .then(desc => setLocalAndOffer(desc))
@@ -114,12 +117,16 @@ function onIceCandidate(event) {
 }
 
 function onAddStream(event) {
+    console.log('receiving remote stream', event.stream);
     remoteVideo.src = URL.createObjectURL(event.stream);
     remoteStream = event.stream;
     if (remoteStream.getAudioTracks().length > 0) {
         addAudioEvent('Remote user is sending Audio');
     } else {
         addAudioEvent('Remote user is not sending Audio');
+    }
+    if (remoteStream.getVideoTracks().length === 0) {
+        remoteVideo.poster = 'anonymousperson.png';
     }
 }
 
@@ -148,6 +155,10 @@ function addLocalStream(stream) {
 
     if (stream.getAudioTracks().length > 0) {
         btnMute.style = "display: block";
+    }
+
+    if (stream.getVideoTracks().length === 0) {
+        localVideo.poster = "anonymousperson.png";
     }
 }
 
