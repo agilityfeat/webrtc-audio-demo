@@ -114,7 +114,7 @@ function onIceCandidate(event) {
 }
 
 function onAddStream(event) {
-    remoteVideo.src = URL.createObjectURL(event.stream);
+    remoteVideo.srcObject  = event.stream;
     remoteStream = event.stream;
     if (remoteStream.getAudioTracks().length > 0) {
         addAudioEvent('Remote user is sending Audio');
@@ -144,7 +144,7 @@ function setLocalAndAnswer(sessionDescription) {
 //utility functions
 function addLocalStream(stream) {
     localStream = stream;
-    localVideo.src = URL.createObjectURL(stream);
+    localVideo.srcObject = stream
 
     if (stream.getAudioTracks().length > 0) {
         btnMute.style = "display: block";
